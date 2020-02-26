@@ -30,8 +30,8 @@ all: dir $(TARGET)
 
 dir:
 	mkdir -p $(BUILDDIR) lib
-	python gl3w_gen.py
-	mv src/gl3w.c src/gl3w.cpp
+#	python gl3w_gen.py
+#	mv src/gl3w.c src/gl3w.cpp
 
 $(TARGET): $(OBJECTS) $(CUDA_OBJECTS)
 	g++ $(LIBPATH) $(LDFLAGS) -o 1 $(OBJECTS) $(CUDA_OBJECTS) $(LIBS) $(CUDA_LIBS)

@@ -4,6 +4,70 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+string errorString(GLenum err){
+	if (err == GL_INVALID_ENUM) return "GL_INVALID_ENUM";
+	else if (err == GL_INVALID_VALUE) return "GL_INVALID_VALUE";
+	else if (err == GL_INVALID_OPERATION) return "GL_INVALID_OPERATION";
+	else if (err == GL_STACK_OVERFLOW) return "GL_STACK_OVERFLOW";
+	else if (err == GL_STACK_UNDERFLOW) return "GL_STACK_UNDERFLOW";
+	else if (err == GL_OUT_OF_MEMORY) return "GL_OUT_OF_MEMORY";
+	else return "NO ERROR"; 
+//	else if (err == GL_TABLE_TOO_LARGE) return "GL_TABLE_TOO_LARGE";	
+}
+
+// TODO: Should there be a GLInterface class that controls the globals? 
+//       e.g. It will store the active shapes list and active tools list, plus active window, active tool, active camera etc. 
+//            Can also separate input form processing
+// 		      Maybe not?
+//            Maybe yes!
+
+void checkGLError(const char * file, int line){
+	GLenum err;
+	while((err = glGetError()) != GL_NO_ERROR){
+		cout << file << ":" << line << "   Error: " << errorString(err) << endl;
+	}
+}
+
+#define CHECK_GL_ERROR() checkGLError(__FILE__, __LINE__)
+
+
+void printStatus(const char *step, GLuint context, GLuint status){
+	GLint result = GL_FALSE;
+	CHECK_GL_ERROR();
+	glGetShaderiv(context, status, &result);
+	CHECK_GL_ERROR();
+	if (result == GL_FALSE) {
+		char buffer[1024];
+		if (status == GL_COMPILE_STATUS)
+			glGetShaderInfoLog(context, 1024, NULL, buffer);
+		else
+			glGetProgramInfoLog(context, 1024, NULL, buffer);
+		if (buffer[0])
+			fprintf(stderr, "%s: %s\n", step, buffer);
+	}
+}
+
+
+GLuint loadShader(string filename, GLenum shader_type){
+	cout << "Loading shader from " << filename << endl;
+	ifstream fin(filename.c_str());
+	string c((istreambuf_iterator<char>(fin)), istreambuf_iterator<char>());
+	const char * glsl_src = c.c_str();
+
+	GLuint shader_id = glCreateShader(shader_type);
+	glShaderSource(shader_id, 1, &glsl_src, NULL);
+	glCompileShader(shader_id);
+	printStatus(filename.c_str(), shader_id, GL_COMPILE_STATUS);
+	
+	return shader_id;
+}
+
+
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -12,18 +76,18 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n\0";
+//const char *vertexShaderSource = "#version 330 core\n"
+//    "layout (location = 0) in vec3 aPos;\n"
+//    "void main()\n"
+//    "{\n"
+//    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+//    "}\0";
+//const char *fragmentShaderSource = "#version 330 core\n"
+//    "out vec4 FragColor;\n"
+//    "void main()\n"
+//    "{\n"
+//    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+//    "}\n\0";
 
 int main()
 {
@@ -65,31 +129,18 @@ int main()
 
     // build and compile our shader program
     // ------------------------------------
-    // vertex shader
-    int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-    // check for shader compile errors
+	int vertexShader = loadShader("shaders/shader_vertex.glsl", GL_VERTEX_SHADER);
+	int fragmentShader = loadShader("shaders/shader_fragment.glsl", GL_FRAGMENT_SHADER);
+	CHECK_GL_ERROR();
+
+//	program = glCreateProgram();
+//	glAttachShader(program, vertexShader);
+//	glAttachShader(program, fragmentShader);
+//	glLinkProgram(program);
+
+    // link shaders
     int success;
     char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // fragment shader
-    int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-    // check for shader compile errors
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-    // link shaders
     int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
