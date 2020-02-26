@@ -172,11 +172,25 @@ int main()
         0, 1, 3,  // first Triangle
         1, 2, 3   // second Triangle
     };
-    unsigned int VBO, VAO, EBO, CBO; //CBO: colours buffer object
+    // texture setup
+    GLfloat UVs[] = {
+       1.0f, 1.0f, //top right
+       1.0f, 0.0f, // bottom right
+       0.0f, 0.0f, // bottom left
+       0.0f, 1.0f // top left 
+    };
+    unsigned char pixels2[] = {
+      0, 0,255,255,     0, 255, 0,255,
+      255,0,0,255,    255,255,255,255
+    };
+    unsigned int VBO, VAO, EBO, CBO, TBO; //CBO: colours buffer object
+    unsigned int tex;
+
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
     glGenBuffers(1, &EBO);
     glGenBuffers(1, &CBO);
+    glGenBuffers(1, &TBO);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     glBindVertexArray(VAO);
 
@@ -186,16 +200,38 @@ int main()
     glBindBuffer(GL_ARRAY_BUFFER, CBO); //cbo addition
     glBufferData(GL_ARRAY_BUFFER, sizeof(colours), colours, GL_STATIC_DRAW); //cbo addition
 
+    glBindBuffer(GL_ARRAY_BUFFER, TBO); //TBO addition
+    glBufferData(GL_ARRAY_BUFFER, sizeof(UVs), UVs, GL_STATIC_DRAW); //TBO addition
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
+    // Texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glUniform1i(glGetUniformLocation(program, "tex"), 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels); // After reading one row of texels, pointer advances to next 4 byte boundary. Therefore ALWAYS use 4byte colour types. 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); //GL_NEAREST);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    CHECK_GL_ERROR();
+
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, CBO);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); // for colours
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0 * sizeof(float), (void*)0); // for colours
     glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, TBO);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0 * sizeof(float), (void*)0); // for colours
+    glEnableVertexAttribArray(2);
+
+
+    //glVertexAttrib4f(1, 1.0f, 0.0f, 0.0f, 1.0f); //single colour
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
