@@ -1,5 +1,6 @@
 #include "../include/glinit.h"
 #include "../include/shape.h"
+#include "../include/tool_base.h"
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -138,6 +139,7 @@ int main()
 	axis.setVertices(pos3);
 	axis.setColors(col3);
 
+	Tool t;
 
     // unsigned int VBO, VAO, EBO, CBO; //CBO: colours buffer object
 

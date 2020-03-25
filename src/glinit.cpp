@@ -126,13 +126,8 @@ int initQuickGL(){
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, onResize);
 
-//    // glad: load all OpenGL function pointers
+//    // gl3w: load all OpenGL function pointers
 //    // ---------------------------------------
-//    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-//    {
-//        std::cout << "Failed to initialize GLAD" << std::endl;
-//        return -1;
-//    }
 	if (gl3wInit()) {
 		printf("failed to initialize OpenGL\n");
 		return -1;
@@ -149,9 +144,9 @@ int initQuickGL(){
 
 	// callbacks
     // glfwSetFramebufferSizeCallback(window, onResize); //CHANGE LATER?
- //    glfwSetMouseButtonCallback(window, onClick);
-	// glfwSetCursorPosCallback(window, onMouseMove);
-	// glfwSetScrollCallback(window, onScroll);
+//    glfwSetMouseButtonCallback(window, onClick);
+//	glfwSetCursorPosCallback(window, onMouseMove);
+//	glfwSetScrollCallback(window, onScroll);
 //	glutMouseFunc(onClick);
 //	glutMotionFunc(onMouseMove);
 	return 0;
