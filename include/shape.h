@@ -29,7 +29,7 @@ class Shape{
 	// GLuint tex;
 	
 	GLenum renderMode;
-	GLuint vertexShader, fragmentShader;
+//	GLuint vertexShader, fragmentShader;
 	GLuint program;
 
 	// glm::mat4 model, world;		// transformations

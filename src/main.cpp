@@ -1,4 +1,5 @@
 #include "../include/glinit.h"
+#include "../include/shape.h"
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -113,10 +114,30 @@ int main()
         0.0f, 0.0f, 1.0f, 1.0f,
         1.0f, 1.0f, 1.0f, 1.0f
     };
-    unsigned int indices[] = {  // note that we start from 0!
+    int indices[] = {  // note that we start from 0!
         0, 1, 3,  // first Triangle
         1, 2, 3   // second Triangle
     };
+
+
+	Shape s(4, GL_TRIANGLES);
+	s.setVertices(vertices);
+	s.setColors(colours);
+	s.setElements(indices, 6);
+
+	float pos3[] = {0,0,0, 10,0,0, 0,0,0, 0,10,0, 0,0,0, 0,0,10};
+	float col3[] = {1,0,0, 0.5,
+				    1,0,0, 0.5,
+				    0,1,0, 0.5,
+				    0,1,0, 0.5,
+				    0.0,0.8,1, 0.5,
+				    0.0,0.8,1, 0.5
+				   };
+
+	Shape axis(6, GL_LINES);
+	axis.setVertices(pos3);
+	axis.setColors(col3);
+
 
     // unsigned int VBO, VAO, EBO, CBO; //CBO: colours buffer object
 
@@ -140,15 +161,15 @@ int main()
  //    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); // for colours
  //    glEnableVertexAttribArray(1);
 
-    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
+//    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+//    glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
     // remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound.
     //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0); 
+//    glBindVertexArray(0); 
 
 
     // uncomment this call to draw in wireframe polygons.
@@ -167,24 +188,26 @@ int main()
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // draw our first triangle
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        //glDrawArrays(GL_TRIANGLES, 0, 6);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //points: GL_POINTS
-        // glBindVertexArray(0); // no need to unbind it every time 
- 
+//        // draw our first triangle
+//        glUseProgram(shaderProgram);
+//        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+//        //glDrawArrays(GL_TRIANGLES, 0, 6);
+//        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); //points: GL_POINTS
+//        // glBindVertexArray(0); // no need to unbind it every time 
+ 		s.render();
+ 		axis.render();
+ 		
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+//    // optional: de-allocate all resources once they've outlived their purpose:
+//    // ------------------------------------------------------------------------
+//    glDeleteVertexArrays(1, &VAO);
+//    glDeleteBuffers(1, &VBO);
+//    glDeleteBuffers(1, &EBO);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

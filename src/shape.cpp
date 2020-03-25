@@ -37,7 +37,7 @@ GLuint loadShader(string filename, GLenum shader_type){
     if (!success)
     {
         glGetShaderInfoLog(shader_id, 512, NULL, infoLog);
-        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 	printStatus(filename.c_str(), shader_id, GL_COMPILE_STATUS);
 	
@@ -65,7 +65,7 @@ Shape::Shape(int nverts, GLenum mode){
 	 // link shaders
     int success;
     char infoLog[512];
-    int program = glCreateProgram();
+    program = glCreateProgram();
     glAttachShader(program, vertexShader);
     glAttachShader(program, fragmentShader);
     glLinkProgram(program);
@@ -84,7 +84,7 @@ Shape::Shape(int nverts, GLenum mode){
 	
     glGenVertexArrays(1, &vao);
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
+    glBindVertexArray(vao);
     CHECK_GL_ERROR();
 
     glGenBuffers(1, &vbo);
@@ -92,25 +92,15 @@ Shape::Shape(int nverts, GLenum mode){
     glGenBuffers(1, &cbo);
 	CHECK_GL_ERROR();
 
+//    // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
+//    glBindBuffer(GL_ARRAY_BUFFER, 0); 
 
-	GLint pos_loc = glGetAttribLocation(program, "aPos");
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	glEnableVertexAttribArray(pos_loc);
+    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    glBindVertexArray(0); 
 	CHECK_GL_ERROR();
 
-	GLint col_loc = glGetAttribLocation(program, "aCol");
-	if (useColor){
-		glBindBuffer(GL_ARRAY_BUFFER, cbo);
-		glVertexAttribPointer(col_loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(col_loc);
-	}
-	else{
-		glVertexAttrib4f(col_loc, 1, 1, 1, 1);
-	}
-	CHECK_GL_ERROR();
 
-	
 	// glUseProgram(program);
 	// // apply a dummy 1x1 white texture 
 	// unsigned char pixels[] = {255,255,255,255}; 
@@ -139,20 +129,25 @@ Shape::~Shape(){
 	// glBindTexture(GL_TEXTURE_2D, 0);
 	// glDeleteTextures(1, &tex);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &ebo);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
+    glDeleteBuffers(1, &cbo);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &vbo);
+//	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+//	glDeleteBuffers(1, &ebo);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &cbo);
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+//	glDeleteBuffers(1, &vbo);
 
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glDeleteBuffers(1, &tbo);
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+//	glDeleteBuffers(1, &cbo);
 
-	glDetachShader(program, vertexShader);
-	glDetachShader(program, fragmentShader);
+//	glBindBuffer(GL_ARRAY_BUFFER, 0);
+//	glDeleteBuffers(1, &tbo);
+
+//	glDetachShader(program, vertexShader);
+//	glDetachShader(program, fragmentShader);
 	glDeleteProgram(program);
 	// glDeleteShader(vertexShader);
 	// glDeleteShader(fragmentShader);
@@ -178,6 +173,7 @@ Shape::~Shape(){
 
 
 void Shape::setVertices(float * verts){
+    glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, 3*nVertices*sizeof(float), verts, GL_DYNAMIC_DRAW);
 
@@ -189,20 +185,51 @@ void Shape::setVertices(float * verts){
 	
 	cout << "Shape bounding box: [" << bbox0.x << " " << bbox0.y << " " << bbox0.z << "] ["  
 								    << bbox1.x << " " << bbox1.y << " " << bbox1.z << "]" << endl;
+	
+	GLint pos_loc = glGetAttribLocation(program, "aPos");
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glVertexAttribPointer(pos_loc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(pos_loc);
+	CHECK_GL_ERROR();
+
+    glBindVertexArray(0); 
+	CHECK_GL_ERROR();
+
 }
 
 
 void Shape::setColors(float * cols){
 	useColor = true;
+
+    glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, cbo);
 	glBufferData(GL_ARRAY_BUFFER, 4*nVertices*sizeof(float), cols, GL_DYNAMIC_DRAW);
+
+	GLint col_loc = glGetAttribLocation(program, "aCol");
+	if (useColor){
+		glBindBuffer(GL_ARRAY_BUFFER, cbo);
+		glVertexAttribPointer(col_loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(col_loc);
+	}
+	else{
+		glVertexAttrib4f(col_loc, 1, 1, 1, 1);
+	}
+	CHECK_GL_ERROR();
+
+    glBindVertexArray(0); 
+	CHECK_GL_ERROR();
+
 }
 
 void Shape::setElements(int * ele, int nelements){
 	useElements = true;
 	nElements = nelements;
+    glBindVertexArray(vao);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, nelements*sizeof(int), ele, GL_DYNAMIC_DRAW);
+    glBindVertexArray(0); 
+	CHECK_GL_ERROR();
+
 }
 
 
@@ -270,13 +297,14 @@ void Shape::setPointSize(float psize){
 
 void Shape::render(){
 	
-	if (activeCamera == NULL) {
-		cout << "WARNING: No camera is active. Cannot draw." << endl;
-		return;
-	}
+//	if (activeCamera == NULL) {
+//		cout << "WARNING: No camera is active. Cannot draw." << endl;
+//		return;
+//	}
 	
 	glUseProgram(program);
-	setShaderVariable("transform", activeCamera->matrix()*world*model);
+	//setShaderVariable("transform", activeCamera->matrix()*world*model);
+	CHECK_GL_ERROR();
 
 	// GLint pos_loc = glGetAttribLocation(program, "in_pos");
 	// glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -309,13 +337,16 @@ void Shape::render(){
 
 	// CHECK_GL_ERROR();
 	
+    glBindVertexArray(vao);
 	if (useElements) glDrawElements(renderMode, nElements, GL_UNSIGNED_INT, (void *)0);
 	else             glDrawArrays(renderMode, 0, nVertices);
 
-	if (useTexture) glDisableVertexAttribArray(uv_loc);
-	if (useColor)   glDisableVertexAttribArray(col_loc);
-	glDisableVertexAttribArray(pos_loc);
+//	if (useTexture) glDisableVertexAttribArray(uv_loc);
+//	if (useColor)   glDisableVertexAttribArray(col_loc);
+//	glDisableVertexAttribArray(pos_loc);
 	CHECK_GL_ERROR();
+	
+
 
 }
 
