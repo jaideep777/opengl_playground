@@ -14,7 +14,7 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-// #include "../include/camera.h"
+#include "../include/camera.h" // for activeCamera->matrix()
 #include "../include/glinit.h"
 
 
@@ -53,7 +53,7 @@ Shape::Shape(int nverts, GLenum mode){
 	nVertices = nverts;
 	renderMode = mode;
 	useColor = useElements = false;
-	// model = world = glm::mat4(1.f);
+	model = world = glm::mat4(1.f);
 	
 	// build and compile our shader program
     // ------------------------------------
@@ -163,13 +163,13 @@ Shape::~Shape(){
 	
 }
 
-// glm::vec3 Shape::getTransformedBBox0(){
-// 	return world*model*glm::vec4(bbox0, 1.f);
-// }
+glm::vec3 Shape::getTransformedBBox0(){
+	return world*model*glm::vec4(bbox0, 1.f);
+}
 
-// glm::vec3 Shape::getTransformedBBox1(){
-// 	return world*model*glm::vec4(bbox1, 1.f);
-// }
+glm::vec3 Shape::getTransformedBBox1(){
+	return world*model*glm::vec4(bbox1, 1.f);
+}
 
 
 void Shape::setVertices(float * verts){
@@ -270,18 +270,18 @@ void Shape::setElements(int * ele, int nelements){
 
 
 
-// // FIXME: use the PVM matrices to set extent
-// void Shape::autoExtent(){
-// 	glm::vec3 size = bbox1 - bbox0;
-// 	glm::vec3 centroid = (bbox0+bbox1)/2.f;
-// 	float scale = 2/fmax(fmax(size.x, size.y), size.z);
+// FIXME: use the PVM matrices to set extent
+void Shape::autoExtent(){
+	glm::vec3 size = bbox1 - bbox0;
+	glm::vec3 centroid = (bbox0+bbox1)/2.f;
+	float scale = 2/fmax(fmax(size.x, size.y), size.z);
 
-// 	world = glm::mat4(1.f);
-// 	model = glm::mat4(1.f);
-// 	model = glm::scale(model, glm::vec3(scale, scale, scale));
-// 	model = glm::translate(model, -centroid);
+	world = glm::mat4(1.f);
+	model = glm::mat4(1.f);
+	model = glm::scale(model, glm::vec3(scale, scale, scale));
+	model = glm::translate(model, -centroid);
 
-// }
+}
 
 void Shape::setShaderVariable(string s, glm::mat4 f){
 	GLuint loc = glGetUniformLocation(program, s.c_str());
@@ -297,13 +297,13 @@ void Shape::setPointSize(float psize){
 
 void Shape::render(){
 	
-//	if (activeCamera == NULL) {
-//		cout << "WARNING: No camera is active. Cannot draw." << endl;
-//		return;
-//	}
+	glm::mat4 camTrans(1.0);
+	if (Camera::activeCamera != NULL) {
+		camTrans = Camera::activeCamera->matrix();
+	}
 	
 	glUseProgram(program);
-	//setShaderVariable("transform", activeCamera->matrix()*world*model);
+	setShaderVariable("transform", camTrans*world*model);
 	CHECK_GL_ERROR();
 
 	// GLint pos_loc = glGetAttribLocation(program, "in_pos");

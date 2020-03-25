@@ -32,7 +32,7 @@ class Shape{
 //	GLuint vertexShader, fragmentShader;
 	GLuint program;
 
-	// glm::mat4 model, world;		// transformations
+	glm::mat4 model, world;		// transformations
 	glm::vec3 bbox0, bbox1;		// bounding box of original shape, in untransformed space
 	
 	public:
@@ -55,8 +55,8 @@ class Shape{
 	
 	virtual void render();
 	
-	// glm::vec3 getTransformedBBox0();
-	// glm::vec3 getTransformedBBox1();	
+	glm::vec3 getTransformedBBox0();
+	glm::vec3 getTransformedBBox1();	
 
 
 };

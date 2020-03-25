@@ -1,6 +1,6 @@
 #include "../include/glinit.h"
 #include "../include/shape.h"
-#include "../include/tool_base.h"
+#include "../include/camera.h"
 
 #include <GL/gl3w.h>
 #include <GLFW/glfw3.h>
@@ -139,7 +139,11 @@ int main()
 	axis.setVertices(pos3);
 	axis.setColors(col3);
 
-	Tool t;
+//	Camera t;
+	glm::vec3 pos(2.0f, 2.0f, 2.0f);
+	glm::vec3 lookat(0.5f, 0.5f, 0.0f);
+	Camera cam(pos, lookat, glm::vec3(0.0f, 0.0f, 1.0f));
+	cam.activate();
 
     // unsigned int VBO, VAO, EBO, CBO; //CBO: colours buffer object
 
